@@ -319,6 +319,12 @@ public class MapperPathUtil {
                                           .name(mediaTypeEntry.getKey())
                                           .refName(defineTypeName(mediaTypeEntry.getValue().getSchema()))
                                           .build());
+        } else if (ARRAY.equalsIgnoreCase(mediaTypeEntry.getValue().getSchema().getType()) && mediaTypeEntry.getValue().getSchema().getItems().get$ref() == null) {
+          contentObjects.add(ContentObject.builder()
+                                          .typeData(mapDataType(mediaTypeEntry.getValue().getSchema(), globalObject.getComponentsTypeMap()))
+                                          .name(mediaTypeEntry.getKey())
+                                          .refName(defineTypeName(mediaTypeEntry.getValue().getSchema()))
+                                          .build());
         } else {
           contentObjects.add(ContentObject.builder()
                                           .typeData(mapDataType(mediaTypeEntry.getValue().getSchema(), globalObject.getComponentsTypeMap()))
@@ -343,6 +349,10 @@ public class MapperPathUtil {
         break;
       case "boolean":
         typeName = "Boolean";
+        break;
+      case ARRAY:
+        final ArraySchema arraySchema = (ArraySchema) schema;
+        typeName = "List<" + defineTypeName(arraySchema.getItems()) + ">";
         break;
       case "string":
       default:

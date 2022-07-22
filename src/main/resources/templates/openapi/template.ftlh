@@ -75,7 +75,7 @@ public interface ${className?cap_first}Api {
      summary = "${operation.summary}",</#if>
      tags = { <#list operation.tags as tag>"${tag}"</#list> }<#if operation.responseObjects?has_content>,
      responses = {
-         <#list operation.responseObjects as response> @ApiResponse(responseCode = "${response.responseName}", description = "${response.description}" <#if response.contentObjects?has_content>, content = @Content(<#list response.contentObjects as content>mediaType = "${content.name}" <#if content.refName?has_content>,schema = @Schema(implementation = ${content.refName?cap_first}.class))</#if> </#list></#if>)<#if !response?is_last>,</#if></#list>
+         <#list operation.responseObjects as response> @ApiResponse(responseCode = "${response.responseName}", description = "${response.description}" <#if response.contentObjects?has_content>, content = @Content(<#list response.contentObjects as content>mediaType = "${content.name}" <#if content.refName?has_content>,schema = @Schema(implementation = <#if content.refName?contains("List")>List.class)<#else>${content.refName?cap_first?no_esc}.class)</#if>)</#if> </#list></#if>)<#if !response?is_last>,</#if></#list>
      }</#if>
   )
   @RequestMapping(
@@ -84,11 +84,10 @@ public interface ${className?cap_first}Api {
     produces = { "application/json" }
   )
 
-  default ResponseEntity<@compress single_line=true><<#if operation.responseObjects[0].contentObjects[0]??><#if operation.responseObjects[0].contentObjects[0].typeData?? && (operation.responseObjects[0].contentObjects[0].typeData == "array")>
-    List<${operation.responseObjects[0].contentObjects[0].refName?cap_first}>
-    <#elseif operation.responseObjects[0].contentObjects[0].typeData?? && (operation.responseObjects[0].contentObjects[0].typeData == "map")>
+  default ResponseEntity<@compress single_line=true><<#if operation.responseObjects[0].contentObjects[0]??>
+    <#if operation.responseObjects[0].contentObjects[0].typeData?? && (operation.responseObjects[0].contentObjects[0].typeData == "map")>
     Map<String,${operation.responseObjects[0].contentObjects[0].refName?cap_first}>
-    <#else>${operation.responseObjects[0].contentObjects[0].refName?cap_first}</#if><#else>Void</#if>></@compress> ${operation.operationId}(<@compress single_line=true>
+    <#else>${operation.responseObjects[0].contentObjects[0].refName?cap_first?no_esc}</#if><#else>Void</#if>></@compress> ${operation.operationId}(<@compress single_line=true>
     <#if operation.parameterObjects?has_content><#list operation.parameterObjects as parameter> @Parameter(name = "${parameter.name}", description = "${parameter.description}", required = ${parameter.required?c}, schema = @Schema(description = "")) <#if parameter.in == "path"> @PathVariable("${parameter.name}") <#elseif parameter.in == "query"> @RequestParam </#if> ${parameter.className?cap_first} ${parameter.name} <#if parameter?has_next || operation.requestObjects?has_content> , </#if></#list></#if>
     <#if path.parameterObjects?has_content><#list path.parameterObjects as parameter> @Parameter(name = "${parameter.name}", description = "${parameter.description}", required = ${parameter.required?c}, schema = @Schema(description = "")) <#if parameter.in == "path"> @PathVariable("${parameter.name}") <#elseif parameter.in == "query"> @RequestParam </#if> ${parameter.className?cap_first} ${parameter.name} <#if parameter?has_next || operation.requestObjects?has_content> , </#if></#list></#if>
     <#if operation.requestObjects?has_content><#list operation.requestObjects as request> @Parameter(name = "${request.contentObjects[0].refName}", description = "${request.description! ""}", required = ${request.required?c} , schema = @Schema(description = "${request.contentObjects[0].description! ""}")) @Valid @RequestBody
